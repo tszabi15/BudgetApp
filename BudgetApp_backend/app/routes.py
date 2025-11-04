@@ -1,8 +1,45 @@
 from flask import Blueprint, request, jsonify, current_app
 from .extensions import db
-from .models import User
+from .models import User, Transaction
 import jwt
 from datetime import datetime, timezone, timedelta
+from functools import wraps
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({'error': 'Hibás token formátum'}), 401
+
+        if not token:
+            return jsonify({'error': 'Hiányzó token'}), 401
+
+        try:
+            data = jwt.decode(
+                token, 
+                current_app.config['SECRET_KEY'], 
+                algorithms=['HS256']
+            )
+            current_user = User.query.get(data['user_id'])
+            if not current_user:
+                return jsonify({'error': 'Felhasználó nem található'}), 404
+                
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'A token lejárt'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Érvénytelen token'}), 401
+        except Exception as e:
+            return jsonify({'error': 'Hiba a token feldolgozása közben', 'details': str(e)}), 500
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
 
 api_bp = Blueprint('api', __name__)
 
