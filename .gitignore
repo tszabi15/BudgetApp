@@ -1,0 +1,27 @@
+# Python bájtkód és gyorsítótár
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtuális környezet
+# Ez a legfontosabb, soha ne töltsd fel a venv mappát!
+venv/
+*.venv
+
+# Adatbázis fájlok
+# Mivel az SQLite csak egy fájl, nem akarjuk feltölteni az adatokat.
+*.db
+*.sqlite
+*.sqlite3
+
+# Környezeti változók és titkok
+# Ha .env fájlt használnál jelszavakhoz, ez megakadályozza a feltöltést.
+.env
+*.env.*
+
+# IDE/Editor specifikus beállítások
+.vscode/
+.idea/
+*.swp
+*.swo
