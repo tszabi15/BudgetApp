@@ -109,3 +109,117 @@ def login():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/transactions', methods=['GET'])
+@token_required
+def get_transactions(current_user):
+    try:
+        transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
+
+        output = []
+        for transaction in transactions:
+            output.append({
+                'id': transaction.id,
+                'description': transaction.description,
+                'amount': transaction.amount,
+                'category': transaction.category,
+                'date': transaction.date.isoformat()
+            })
+            
+        return jsonify({'transactions': output}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/transactions', methods=['POST'])
+@token_required
+def create_transaction(current_user):
+    try:
+        data = request.get_json()
+
+        if not data or not data.get('description') or data.get('amount') is None:
+            return jsonify({'error': 'Hiányzó adatok (description, amount szükséges)'}), 400
+
+        new_transaction = Transaction(
+            description=data['description'],
+            amount=float(data['amount']),
+            category=data.get('category', 'Egyéb'),
+            user_id=current_user.id
+        )
+        
+        db.session.add(new_transaction)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Tranzakció sikeresen létrehozva',
+            'transaction': {
+                'id': new_transaction.id,
+                'description': new_transaction.description,
+                'amount': new_transaction.amount,
+                'category': new_transaction.category,
+                'date': new_transaction.date.isoformat()
+            }
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/transactions/<int:id>', methods=['PUT'])
+@token_required
+def update_transaction(current_user, id):
+    try:
+        transaction = Transaction.query.get(id)
+
+        if not transaction:
+            return jsonify({'error': 'Tranzakció nem található'}), 404
+
+        if transaction.user_id != current_user.id:
+            return jsonify({'error': 'Nincs jogosultsága ehhez a művelethez'}), 403
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Hiányzó adatok'}), 400
+
+        transaction.description = data.get('description', transaction.description)
+        transaction.amount = float(data.get('amount', transaction.amount))
+        transaction.category = data.get('category', transaction.category)
+        
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Tranzakció sikeresen frissítve',
+            'transaction': {
+                'id': transaction.id,
+                'description': transaction.description,
+                'amount': transaction.amount,
+                'category': transaction.category,
+                'date': transaction.date.isoformat()
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/transactions/<int:id>', methods=['DELETE'])
+@token_required
+def delete_transaction(current_user, id):
+    try:
+        transaction = Transaction.query.get(id)
+
+        if not transaction:
+            return jsonify({'error': 'Tranzakció nem található'}), 404
+            
+        if transaction.user_id != current_user.id:
+            return jsonify({'error': 'Nincs jogosultsága ehhez a művelethez'}), 403
+
+        db.session.delete(transaction)
+        db.session.commit()
+        
+        return jsonify({'message': 'Tranzakció sikeresen törölve'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
