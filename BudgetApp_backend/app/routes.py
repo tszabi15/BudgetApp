@@ -28,7 +28,6 @@ def register():
         )
         new_user.set_password(data['password'])
 
-        # Mentés az adatbázisba
         db.session.add(new_user)
         db.session.commit()
 
@@ -36,4 +35,40 @@ def register():
 
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/login', methods=['POST'])
+def login():
+    """Felhasználó bejelentkeztetése és JWT token generálása."""
+    try:
+        data = request.get_json()
+
+        if not data or not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Hiányzó adatok (email, password szükséges)'}), 400
+
+        user = User.query.filter_by(email=data['email']).first()
+
+        if not user or not user.check_password(data['password']):
+            return jsonify({'error': 'Hibás email cím vagy jelszó'}), 401
+
+        token_payload = {
+            'user_id': user.id,
+            'username': user.username,
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24) #
+        }
+        
+        token = jwt.encode(
+            token_payload,
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+
+        return jsonify({
+            'message': 'Sikeres bejelentkezés',
+            'token': token,
+            'user': { 'id': user.id, 'username': user.username, 'email': user.email }
+        }), 200
+
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
