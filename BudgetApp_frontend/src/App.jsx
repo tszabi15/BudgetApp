@@ -1,13 +1,24 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.jsx
+import { Routes, Route } from 'react-router-dom';
+
+import Layout from './components/Layout';
+import DashboardPage from './pages/Dashboard';
+import LoginPage from './pages/Login';
+import RegisterPage from './pages/Register';
 
 function App() {
-
   return (
-    <h1>Budget app</h1>
-  )
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        
+        <Route index element={<DashboardPage />} />
+        
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+export default App;
