@@ -131,6 +131,7 @@ def get_transactions(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @api_bp.route('/transactions', methods=['POST'])
 @token_required
 def create_transaction(current_user):
@@ -140,10 +141,25 @@ def create_transaction(current_user):
         if not data or not data.get('description') or data.get('amount') is None:
             return jsonify({'error': 'Hiányzó adatok (description, amount szükséges)'}), 400
 
+        transaction_date_obj = None
+        date_string = data.get('date')
+
+        if date_string:
+            try:
+                if date_string.endswith('Z'):
+                    date_string = date_string[:-1] + '+00:00'
+                transaction_date_obj = datetime.fromisoformat(date_string)
+            except (ValueError, TypeError):
+                return jsonify({'error': "Érvénytelen dátum formátum. ISO 8601 (pl. '2025-11-04T10:30:00Z') szükséges."}), 400
+        else:
+
+            transaction_date_obj = datetime.now(timezone.utc)
+
         new_transaction = Transaction(
             description=data['description'],
             amount=float(data['amount']),
             category=data.get('category', 'Egyéb'),
+            date=transaction_date_obj,
             user_id=current_user.id
         )
         
@@ -165,6 +181,7 @@ def create_transaction(current_user):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
     
+
 @api_bp.route('/transactions/<int:id>', methods=['PUT'])
 @token_required
 def update_transaction(current_user, id):
@@ -173,12 +190,11 @@ def update_transaction(current_user, id):
 
         if not transaction:
             return jsonify({'error': 'Tranzakció nem található'}), 404
-
+            
         if transaction.user_id != current_user.id:
             return jsonify({'error': 'Nincs jogosultsága ehhez a művelethez'}), 403
 
         data = request.get_json()
-
         if not data:
             return jsonify({'error': 'Hiányzó adatok'}), 400
 
@@ -186,6 +202,15 @@ def update_transaction(current_user, id):
         transaction.amount = float(data.get('amount', transaction.amount))
         transaction.category = data.get('category', transaction.category)
         
+        date_string = data.get('date')
+        if date_string:
+            try:
+                if date_string.endswith('Z'):
+                    date_string = date_string[:-1] + '+00:00'
+                transaction.date = datetime.fromisoformat(date_string)
+            except (ValueError, TypeError):
+                return jsonify({'error': "Érvénytelen dátum formátum. ISO 8601 (pl. '2025-11-04T10:30:00Z') szükséges."}), 400
+
         db.session.commit()
 
         return jsonify({
