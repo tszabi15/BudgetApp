@@ -18,8 +18,8 @@ class User(db.Model):
     
     transactions = db.relationship('Transaction', back_populates='user', lazy=True, cascade="all, delete-orphan")
 
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) # Lehet null, ha nincs szerepkör
-    
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) 
+        
     role = db.relationship('Role', back_populates='users')
 
     def set_password(self, password):

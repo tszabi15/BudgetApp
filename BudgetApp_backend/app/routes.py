@@ -135,8 +135,20 @@ def login():
 @api_bp.route('/transactions', methods=['GET'])
 @token_required
 def get_transactions(current_user):
+
     try:
-        transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
+        search_term = request.args.get('search')
+        category_filter = request.args.get('category')
+
+        query = Transaction.query.filter_by(user_id=current_user.id)
+
+        if search_term:
+            query = query.filter(Transaction.description.ilike(f'%{search_term}%'))
+
+        if category_filter:
+            query = query.filter_by(category=category_filter)
+
+        transactions = query.order_by(Transaction.date.desc()).all()
         
         output = []
         for transaction in transactions:
@@ -288,6 +300,22 @@ def get_all_transactions(current_user):
             })
             
         return jsonify({'all_transactions': output}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/categories', methods=['GET'])
+@token_required
+def get_categories(current_user):
+    try:
+        category_tuples = db.session.query(Transaction.category)\
+            .filter_by(user_id=current_user.id)\
+            .distinct()\
+            .all()
+        
+        categories = [category[0] for category in category_tuples if category[0]]
+        
+        return jsonify({'categories': categories}), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
