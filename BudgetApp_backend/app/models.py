@@ -1,6 +1,15 @@
 from app.extensions import db, bcrypt
 from datetime import datetime, timezone
 
+class Role(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    
+    users = db.relationship('User', back_populates='role', lazy=True)
+
+    def __repr__(self):
+        return f'<Role {self.name}>'
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -9,11 +18,21 @@ class User(db.Model):
     
     transactions = db.relationship('Transaction', back_populates='user', lazy=True, cascade="all, delete-orphan")
 
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) # Lehet null, ha nincs szerepkör
+    
+    role = db.relationship('Role', back_populates='users')
+
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
+
+    def has_role(self, role_name):
+        """Ellenőrzi, hogy a felhasználó szerepköre megegyezik-e a keresettel."""
+        if self.role and self.role.name == role_name:
+            return True
+        return False
 
     def __repr__(self):
         return f'<User {self.username}>'

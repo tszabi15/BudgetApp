@@ -1,9 +1,12 @@
+# app/routes.py
+
 from flask import Blueprint, request, jsonify, current_app
 from .extensions import db
-from .models import User, Transaction
+from .models import User, Transaction, Role
 import jwt
 from datetime import datetime, timezone, timedelta
 from functools import wraps
+
 
 def token_required(f):
     @wraps(f)
@@ -41,6 +44,21 @@ def token_required(f):
     return decorated
 
 
+def admin_required(f):
+    """
+    Egy dekorátor, ami ellenőrzi, hogy a felhasználó 'admin' szerepkörrel rendelkezik-e.
+    MINDIG a @token_required UTÁN kell használni.
+    """
+    @wraps(f)
+    def decorated(current_user, *args, **kwargs):
+        if not current_user.has_role('admin'):
+            return jsonify({'error': 'Admin jogosultság szükséges ehhez a művelethez'}), 403 # 403 Forbidden
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
+
 api_bp = Blueprint('api', __name__)
 
 
@@ -65,6 +83,12 @@ def register():
         )
         new_user.set_password(data['password'])
 
+        default_role = Role.query.filter_by(name='user').first()
+        if default_role:
+            new_user.role = default_role
+        else:
+            return jsonify({'error': "Alapértelmezett 'user' szerepkör nem található."}), 500
+
         db.session.add(new_user)
         db.session.commit()
 
@@ -73,7 +97,7 @@ def register():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-    
+
 @api_bp.route('/login', methods=['POST'])
 def login():
     """Felhasználó bejelentkeztetése és JWT token generálása."""
@@ -88,11 +112,14 @@ def login():
         if not user or not user.check_password(data['password']):
             return jsonify({'error': 'Hibás email cím vagy jelszó'}), 401
 
+        user_roles = [user.role.name] if user.role else []
+
         token_payload = {
             'user_id': user.id,
             'username': user.username,
+            'roles': user_roles,
             'iat': datetime.now(timezone.utc),
-            'exp': datetime.now(timezone.utc) + timedelta(hours=24) #
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
         }
         
         token = jwt.encode(
@@ -104,18 +131,20 @@ def login():
         return jsonify({
             'message': 'Sikeres bejelentkezés',
             'token': token,
-            'user': { 'id': user.id, 'username': user.username, 'email': user.email }
+            'user': { 'id': user.id, 'username': user.username, 'email': user.email, 'roles': user_roles }
         }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+
 @api_bp.route('/transactions', methods=['GET'])
 @token_required
 def get_transactions(current_user):
+    """Visszaadja a bejelentkezett felhasználó összes tranzakcióját."""
     try:
         transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
-
+        
         output = []
         for transaction in transactions:
             output.append({
@@ -131,10 +160,10 @@ def get_transactions(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @api_bp.route('/transactions', methods=['POST'])
 @token_required
 def create_transaction(current_user):
+    """Létrehoz egy új tranzakciót (egyedi dátummal)."""
     try:
         data = request.get_json()
 
@@ -152,7 +181,6 @@ def create_transaction(current_user):
             except (ValueError, TypeError):
                 return jsonify({'error': "Érvénytelen dátum formátum. ISO 8601 (pl. '2025-11-04T10:30:00Z') szükséges."}), 400
         else:
-
             transaction_date_obj = datetime.now(timezone.utc)
 
         new_transaction = Transaction(
@@ -180,18 +208,18 @@ def create_transaction(current_user):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-    
 
 @api_bp.route('/transactions/<int:id>', methods=['PUT'])
 @token_required
 def update_transaction(current_user, id):
+    """Frissít egy meglévő tranzakciót (egyedi dátummal)."""
     try:
         transaction = Transaction.query.get(id)
 
         if not transaction:
             return jsonify({'error': 'Tranzakció nem található'}), 404
-            
-        if transaction.user_id != current_user.id:
+
+        if transaction.user_id != current_user.id and not current_user.has_role('admin'):
             return jsonify({'error': 'Nincs jogosultsága ehhez a művelethez'}), 403
 
         data = request.get_json()
@@ -209,7 +237,7 @@ def update_transaction(current_user, id):
                     date_string = date_string[:-1] + '+00:00'
                 transaction.date = datetime.fromisoformat(date_string)
             except (ValueError, TypeError):
-                return jsonify({'error': "Érvénytelen dátum formátum. ISO 8601 (pl. '2025-11-04T10:30:00Z') szükséges."}), 400
+                return jsonify({'error': "Érvénytelen dátum formátum."}), 400
 
         db.session.commit()
 
@@ -231,13 +259,14 @@ def update_transaction(current_user, id):
 @api_bp.route('/transactions/<int:id>', methods=['DELETE'])
 @token_required
 def delete_transaction(current_user, id):
+    """Töröl egy tranzakciót."""
     try:
         transaction = Transaction.query.get(id)
 
         if not transaction:
             return jsonify({'error': 'Tranzakció nem található'}), 404
             
-        if transaction.user_id != current_user.id:
+        if transaction.user_id != current_user.id and not current_user.has_role('admin'):
             return jsonify({'error': 'Nincs jogosultsága ehhez a művelethez'}), 403
 
         db.session.delete(transaction)
@@ -247,4 +276,29 @@ def delete_transaction(current_user, id):
 
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/transactions/all', methods=['GET'])
+@token_required
+@admin_required
+def get_all_transactions(current_user):
+    """(Csak Admin) Visszaadja az ÖSSZES tranzakciót a rendszerben."""
+    
+    try:
+        transactions = Transaction.query.order_by(Transaction.date.desc()).all()
+        
+        output = []
+        for transaction in transactions:
+            output.append({
+                'id': transaction.id,
+                'description': transaction.description,
+                'amount': transaction.amount,
+                'category': transaction.category,
+                'date': transaction.date.isoformat(),
+                'user_id': transaction.user_id
+            })
+            
+        return jsonify({'all_transactions': output}), 200
+        
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
