@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
+import AddTransactionForm from '../components/AddTransactionForm';
 import './Dashboard.css';
 
 function DashboardPage() {
@@ -40,6 +41,13 @@ function DashboardPage() {
       alert("Failed to delete transaction.");
     }
   };
+
+  const handleAddNewTransaction = (newTransaction) => {
+    setTransactions((prevTransactions) => [
+      newTransaction, 
+      ...prevTransactions
+    ]);
+  };
   
   if (loading) {
     return <div className="loading">Loading transactions...</div>;
@@ -53,6 +61,8 @@ function DashboardPage() {
     <div className="dashboard-container">
       <h2>Your Transactions</h2>
       
+      <AddTransactionForm onNewTransaction={handleAddNewTransaction} />
+
       <ul className="transactions-list">
         {transactions.length === 0 ? (
           <p>No transactions found. Add one to get started!</p>
