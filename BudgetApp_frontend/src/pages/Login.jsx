@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 import './Login.css'; 
 
 function LoginPage() {
@@ -9,6 +10,7 @@ function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,12 +23,9 @@ function LoginPage() {
         password: password
       });
 
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      login(response.data.token, response.data.user);
       
-      console.log('Login successful:', response.data);
-
-      window.location.href = '/'; 
+      navigate('/');
 
     } catch (err) {
       console.error("Login error:", err);

@@ -1,17 +1,15 @@
 // src/components/Layout.jsx
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Layout.css';
 
 function Layout() {
-  const navigate = useNavigate(); 
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   
-  const token = localStorage.getItem('token');
-
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    window.location.href = '/login';
+    logout();
+    navigate('/login');
   };
 
   return (
