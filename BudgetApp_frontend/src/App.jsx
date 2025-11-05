@@ -5,6 +5,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardPage from './pages/Dashboard';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
+import TransactionsPage from './pages/Transactions';
 
 function App() {
   return (
@@ -16,13 +17,9 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route index element={<DashboardPage />} />
-          
-          {/*Protected routes*/}
+          <Route path="transactions" element={<TransactionsPage />} />
         </Route>
 
-        {/* 404 page
-          <Route path="*" element={<NotFoundPage />} /> 
-        */}
       </Route>
     </Routes>
   );

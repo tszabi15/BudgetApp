@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
 import AddTransactionForm from '../components/AddTransactionForm';
+import Modal from '../components/Modal';
+import EditTransactionForm from '../components/EditTransactionForm';
 import './Dashboard.css';
 
 function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -48,6 +53,23 @@ function DashboardPage() {
       ...prevTransactions
     ]);
   };
+
+  const handleOpenEditModal = (transaction) => {
+    setEditingTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTransaction(null);
+  };
+
+  const handleUpdateSuccess = (updatedTransaction) => {
+    setTransactions(transactions.map(t => 
+      t.id === updatedTransaction.id ? updatedTransaction : t
+    ));
+    handleCloseModal();
+  };
   
   if (loading) {
     return <div className="loading">Loading transactions...</div>;
@@ -87,10 +109,10 @@ function DashboardPage() {
                 {t.amount.toFixed(2)}
               </div>
               <div className="transaction-actions">
-                <button 
-                  onClick={() => handleDelete(t.id)}
-                  className="delete-button"
-                >
+                <button onClick={() => handleOpenEditModal(t)} className="edit-button">
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(t.id)} className="delete-button">
                   Delete
                 </button>
               </div>
@@ -98,6 +120,13 @@ function DashboardPage() {
           ))
         )}
       </ul>
+      <Modal show={isModalOpen} onClose={handleCloseModal}>
+        <EditTransactionForm
+          transaction={editingTransaction}
+          onUpdate={handleUpdateSuccess}
+          onCancel={handleCloseModal}
+        />
+      </Modal>
     </div>
   );
 }

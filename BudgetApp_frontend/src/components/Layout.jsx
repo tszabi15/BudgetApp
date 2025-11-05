@@ -19,6 +19,9 @@ function Layout() {
           <li>
             <Link to="/">Dashboard</Link>
           </li>
+          <li>
+            <Link to="/transactions">All Transactions</Link>
+          </li>
           
           {token ? (
             <li className="login">
