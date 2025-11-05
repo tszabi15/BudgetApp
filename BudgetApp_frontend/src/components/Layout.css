@@ -23,7 +23,7 @@
   color: #007bff;
 }
 
-.login {
+.login, .logout-button, .currency-dropdown {
   margin-left: auto;
 }
 
@@ -50,4 +50,16 @@
 
 .logout-button:hover {
   color: #007bff;
+}
+
+.currency-dropdown {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  
+  font-size: 0.95rem;
+  line-height: 1.5;
 }

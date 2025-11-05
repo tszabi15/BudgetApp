@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import apiClient from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 import './AddTransactionForm.css';
 
 function AddTransactionForm({ onNewTransaction }) {
+    const { user } = useAuth();
 
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
@@ -61,7 +63,7 @@ function AddTransactionForm({ onNewTransaction }) {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="amount">Amount *</label>
+            <label htmlFor="amount">Amount ({user?.currency || 'USD'})</label>
             <input
               type="number"
               id="amount"

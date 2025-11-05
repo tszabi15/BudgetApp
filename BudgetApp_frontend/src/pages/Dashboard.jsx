@@ -3,9 +3,12 @@ import apiClient from '../api/apiClient';
 import AddTransactionForm from '../components/AddTransactionForm';
 import Modal from '../components/Modal';
 import EditTransactionForm from '../components/EditTransactionForm';
+import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 function DashboardPage() {
+  const { user } = useAuth();
+
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,6 +73,15 @@ function DashboardPage() {
     ));
     handleCloseModal();
   };
+
+  const formatCurrency = (amount) => {
+      const currency = user?.currency || 'USD';
+
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+  };
   
   if (loading) {
     return <div className="loading">Loading transactions...</div>;
@@ -106,7 +118,7 @@ function DashboardPage() {
                   t.amount < 0 ? 'expense' : 'income'
                 }`}
               >
-                {t.amount.toFixed(2)}
+                {formatCurrency(t.amount)}
               </div>
               <div className="transaction-actions">
                 <button onClick={() => handleOpenEditModal(t)} className="edit-button">

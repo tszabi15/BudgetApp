@@ -22,14 +22,22 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (updatedUser) => {
+    if (updatedUser) {
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  };
+
   const value = useMemo(
     () => ({
       token,
       user,
       login,
       logout,
+      updateUser,
     }),
-    [token]
+    [token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

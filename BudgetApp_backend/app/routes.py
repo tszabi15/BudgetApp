@@ -113,7 +113,8 @@ def login():
             'username': user.username,
             'roles': user_roles,
             'iat': datetime.now(timezone.utc),
-            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24),
+            'currency': user.currency
         }
         
         token = jwt.encode(
@@ -129,6 +130,36 @@ def login():
         }), 200
 
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/profile/settings', methods=['PUT'])
+@token_required
+def update_settings(current_user):
+    """Updates the user's profile settings (e.g., currency)."""
+    try:
+        data = request.get_json()
+        new_currency = data.get('currency')
+
+        if not new_currency or len(new_currency) != 3:
+            return jsonify({'error': 'Invalid currency code. Must be 3 letters.'}), 400
+
+        current_user.currency = new_currency.upper()
+        db.session.commit()
+        
+        user_roles = [current_user.role.name] if current_user.role else []
+        return jsonify({
+            'message': 'Settings updated successfully',
+            'user': {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+                'roles': user_roles,
+                'currency': current_user.currency
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 

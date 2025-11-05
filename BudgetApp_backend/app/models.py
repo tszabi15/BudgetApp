@@ -22,6 +22,8 @@ class User(db.Model):
         
     role = db.relationship('Role', back_populates='users')
 
+    currency = db.Column(db.String(3), nullable=False, default='USD')
+
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
