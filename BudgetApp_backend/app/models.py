@@ -29,7 +29,6 @@ class User(db.Model):
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def has_role(self, role_name):
-        """Ellenőrzi, hogy a felhasználó szerepköre megegyezik-e a keresettel."""
         if self.role and self.role.name == role_name:
             return True
         return False

@@ -48,7 +48,7 @@ def admin_required(f):
     @wraps(f)
     def decorated(current_user, *args, **kwargs):
         if not current_user.has_role('admin'):
-            return jsonify({'error': 'Admin role required.'}), 403 # 403 Forbidden
+            return jsonify({'error': 'Admin role required.'}), 403
 
         return f(current_user, *args, **kwargs)
 
@@ -87,7 +87,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return jsonify({'message': 'Succesful registration.'}), 201
+        return jsonify({'message': 'Successful registration.'}), 201
 
     except Exception as e:
         db.session.rollback()
