@@ -63,11 +63,14 @@ function DashboardPage() {
       
       <AddTransactionForm onNewTransaction={handleAddNewTransaction} />
 
+      {transactions.length > 0 && <h3>Recent Transactions</h3>}
+
       <ul className="transactions-list">
         {transactions.length === 0 ? (
           <p>No transactions found. Add one to get started!</p>
         ) : (
-          transactions.map(t => (
+
+          transactions.slice(0, 10).map(t => (
             <li key={t.id} className="transaction-item">
               <div className="transaction-details">
                 <div className="transaction-description">{t.description}</div>
