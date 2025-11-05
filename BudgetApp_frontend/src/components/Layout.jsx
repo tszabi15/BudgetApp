@@ -1,29 +1,28 @@
+// src/components/Layout.jsx
 import { Outlet, Link } from 'react-router-dom';
+import './Layout.css';
 
 function Layout() {
   return (
     <div>
-      <nav style={{ padding: '1rem', background: '#f4f4f4' }}>
-        <ul style={{ listStyle: 'none', display: 'flex', gap: '1rem' }}>
+      <nav className="main-nav">
+        <ul className="nav-links">
           <li>
             <Link to="/">Dashboard</Link>
           </li>
-          <li>
-            <Link to="/login">Bejelentkezés</Link>
-          </li>
-          <li>
-            <Link to="/register">Regisztráció</Link>
+          
+          <li className="login">
+            <Link to="/login">Login</Link>
           </li>
         </ul>
       </nav>
 
-      <hr />
-
-      <main style={{ padding: '1rem' }}>
+      <main className="main-content">
         <Outlet />
       </main>
-
+      
     </div>
   );
 }
+
 export default Layout;
