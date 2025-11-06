@@ -6,6 +6,8 @@ import DashboardPage from './pages/Dashboard';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import TransactionsPage from './pages/Transactions';
+import AdminRoute from './components/auth/AdminRoute';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -20,6 +22,9 @@ function App() {
           <Route path="transactions" element={<TransactionsPage />} />
         </Route>
 
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<AdminPage />} />
+        </Route>
       </Route>
     </Routes>
   );

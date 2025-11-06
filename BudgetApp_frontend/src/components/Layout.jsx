@@ -36,6 +36,8 @@ function Layout() {
     }
   };
 
+  const isAdmin = user && user.roles.includes('admin');
+
   return (
     <div>
       <nav className="main-nav">
@@ -46,6 +48,14 @@ function Layout() {
           <li>
             <Link to="/transactions">Transactions</Link>
           </li>
+          {isAdmin && (
+            <li>
+              <Link to="/admin" style={{color: '#c0392b', fontWeight: 'bold'}}>
+                Admin
+              </Link>
+            </li>
+          )}
+          {token ? (
           <li className="currency-dropdown">
                 <select 
                   className="currency-dropdown"
@@ -59,6 +69,7 @@ function Layout() {
                   ))}
                 </select>
               </li>
+            ) : (null)}
           {token ? (
             <li className="logout-button">
               <button onClick={handleLogout} className="logout-button">

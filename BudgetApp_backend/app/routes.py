@@ -317,36 +317,25 @@ def delete_transaction(current_user, id):
 def get_all_transactions(current_user):
     
     try:
-        transactions = Transaction.query.order_by(Transaction.date.desc()).all()
+        transactions = db.session.query(Transaction, User.currency)\
+            .join(User, Transaction.user_id == User.id)\
+            .order_by(Transaction.date.desc())\
+            .all()
         
         output = []
-        for transaction in transactions:
+        for transaction_obj, currency in transactions:
             output.append({
-                'id': transaction.id,
-                'description': transaction.description,
-                'amount': transaction.amount,
-                'category': transaction.category,
-                'date': transaction.date.isoformat(),
-                'user_id': transaction.user_id
+                'id': transaction_obj.id,
+                'description': transaction_obj.description,
+                'amount': transaction_obj.amount,
+                'category': transaction_obj.category,
+                'date': transaction_obj.date.isoformat(),
+                'user_id': transaction_obj.user_id,
+                'currency': currency 
             })
             
         return jsonify({'all_transactions': output}), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-@api_bp.route('/categories', methods=['GET'])
-@token_required
-def get_categories(current_user):
-    try:
-        category_tuples = db.session.query(Transaction.category)\
-            .filter_by(user_id=current_user.id)\
-            .distinct()\
-            .all()
-        
-        categories = [category[0] for category in category_tuples if category[0]]
-        
-        return jsonify({'categories': categories}), 200
-        
-    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
