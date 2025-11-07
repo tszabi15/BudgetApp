@@ -315,15 +315,19 @@ def delete_transaction(current_user, id):
 @token_required
 @admin_required
 def get_all_transactions(current_user):
-    
+
     try:
-        transactions = db.session.query(Transaction, User.currency)\
-            .join(User, Transaction.user_id == User.id)\
-            .order_by(Transaction.date.desc())\
-            .all()
+        transactions = db.session.query(
+            Transaction, 
+            User.currency, 
+            User.username
+        )\
+        .join(User, Transaction.user_id == User.id)\
+        .order_by(Transaction.date.desc())\
+        .all()
         
         output = []
-        for transaction_obj, currency in transactions:
+        for transaction_obj, currency, username in transactions:
             output.append({
                 'id': transaction_obj.id,
                 'description': transaction_obj.description,
@@ -331,7 +335,8 @@ def get_all_transactions(current_user):
                 'category': transaction_obj.category,
                 'date': transaction_obj.date.isoformat(),
                 'user_id': transaction_obj.user_id,
-                'currency': currency 
+                'username': username,
+                'currency': currency
             })
             
         return jsonify({'all_transactions': output}), 200

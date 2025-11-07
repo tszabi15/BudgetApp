@@ -10,7 +10,9 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [descSearchTerm, setDescSearchTerm] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
 
@@ -69,13 +71,15 @@ function AdminPage() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!searchTerm) {
-      return allTransactions;
-    }
-    return allTransactions.filter(t => 
-      t.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allTransactions, searchTerm]);
+    return allTransactions.filter(t => {
+      const descMatch = t.description.toLowerCase().includes(descSearchTerm.toLowerCase());
+
+      const userMatch = t.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                        t.user_id.toString().includes(userSearchTerm);
+                        
+      return descMatch && userMatch;
+    });
+  }, [allTransactions, descSearchTerm, userSearchTerm]);
 
   if (loading) {
     return <div className="loading">Loading admin data...</div>;
@@ -90,14 +94,24 @@ function AdminPage() {
       <h2>Admin Panel - All Transactions</h2>
       
       <div className="filters-container">
-        <div className="filter-group" style={{width: '100%'}}>
-          <label htmlFor="admin-search">Search by Description</label>
+        <div className="filter-group">
+          <label htmlFor="admin-desc-search">Search by Description</label>
           <input 
             type="text"
-            id="admin-search"
-            placeholder="Search all transactions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            id="admin-desc-search"
+            placeholder="Search description..."
+            value={descSearchTerm}
+            onChange={(e) => setDescSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <label htmlFor="admin-user-search">Search by User (ID or Name)</label>
+          <input 
+            type="text"
+            id="admin-user-search"
+            placeholder="Search user ID or name..."
+            value={userSearchTerm}
+            onChange={(e) => setUserSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -115,7 +129,7 @@ function AdminPage() {
                   {new Date(t.date).toLocaleDateString()}
                 </div>
                 <div className="transaction-user" style={{fontSize: '0.8rem', color: '#555', paddingTop: '4px'}}>
-                  (User ID: {t.user_id})
+                  {t.username} (ID: {t.user_id})
                 </div>
               </div>
               <div 
