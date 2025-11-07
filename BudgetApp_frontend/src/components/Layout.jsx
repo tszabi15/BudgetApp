@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/apiClient';
 import './Layout.css';
@@ -14,14 +13,8 @@ const CURRENCIES = [
 
 function Layout() {
   const { user, token, logout, updateUser } = useAuth();
+  const isAdmin = user && user.roles.includes('admin');
   const navigate = useNavigate();
-  
-  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const handleCurrencyChange = async (e) => {
     const newCurrency = e.target.value;
@@ -29,79 +22,87 @@ function Layout() {
       const response = await apiClient.put('/profile/settings', {
         currency: newCurrency,
       });
-      
       updateUser(response.data.user);
-
     } catch (err) {
       console.error("Failed to update currency", err);
       alert("Error: Could not update currency.");
     }
   };
 
-  const isAdmin = user && user.roles.includes('admin');
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  if (!token) {
+    return <Outlet />;
+  }
 
   return (
-    <div>
-      <nav className="main-nav">
-        <ul className="nav-links">
-          <li>
-            <Link to="/">Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/transactions">Transactions</Link>
-          </li>
-          {isAdmin && (
-            <li className="nav-dropdown">
-              <button 
-                className="nav-dropdown-trigger" 
-                onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
-              >
-                Admin
-              </button>
-              <div className={`dropdown-menu ${isAdminDropdownOpen ? 'show' : ''}`}>
-                <Link to="/admin/transactions" onClick={() => setIsAdminDropdownOpen(false)}>
-                  All Transactions
-                </Link>
-                <Link to="/admin/users" onClick={() => setIsAdminDropdownOpen(false)}>
-                  User Management
-                </Link>
-              </div>
-            </li>
-          )}
-          {token ? (
-          <li className="currency-dropdown">
-                <select 
-                  className="currency-dropdown"
-                  value={user?.currency || 'USD'}
-                  onChange={handleCurrencyChange}
-                >
-                  {CURRENCIES.map(c => (
-                    <option key={c.code} value={c.code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </li>
-            ) : (null)}
-          {token ? (
-            <li className="logout-button">
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button></li>
-          ) : (
-            <>
-              <li className="login">
-                <Link to="/login">Login</Link>
-              </li>
-            </>
-          )}
-        </ul>
-      </nav>
+    <div className="layout-container">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          BudgetApp
+        </div>
 
-      <main className="main-content">
+        <nav className="sidebar-nav">
+          <ul>
+            <li>
+              <NavLink to="/" end>
+                <i className="fas fa-tachometer-alt"></i> Dashboard
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/transactions">
+                <i className="fas fa-exchange-alt"></i> All Transactions
+              </NavLink>
+            </li>
+          </ul>
+
+          {isAdmin && (
+            <div className="sidebar-admin-menu">
+              <h4><i className="fas fa-shield-alt"></i> Admin</h4>
+              <ul>
+                <li>
+                  <NavLink to="/admin/transactions">
+                    <i className="fas fa-list-ul"></i> All Transactions
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/users">
+                    <i className="fas fa-users"></i> User Management
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          )}
+        </nav>
+
+        <footer className="sidebar-footer">
+          <div className="currency-selector-container">
+            <label htmlFor="layout-currency">Currency</label>
+            <select
+              id="layout-currency"
+              value={user?.currency || 'USD'}
+              onChange={handleCurrencyChange}
+            >
+              {CURRENCIES.map(c => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <button onClick={handleLogout} className="sidebar-logout-button">
+            <i className="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </footer>
+      </aside>
+
+      <main className="content-area">
         <Outlet />
       </main>
-      
     </div>
   );
 }
