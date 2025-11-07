@@ -23,10 +23,15 @@ const getYearOptions = () => {
 
 function SummaryStats() {
   const { user } = useAuth();
+  
   const [stats, setStats] = useState({
     total_income: 0,
     total_expense: 0,
     net_balance: 0,
+    total_transactions: 0,
+    biggest_income: 0,
+    biggest_expense: 0,
+    average_expense: 0,
   });
   const [loading, setLoading] = useState(true);
   
@@ -49,7 +54,7 @@ function SummaryStats() {
       }
     };
     fetchStats();
-  }, [month, year]);
+  }, [month, year]); 
 
   const formatCurrency = (amount) => {
     const currency = user?.currency || 'USD';
@@ -63,6 +68,7 @@ function SummaryStats() {
     <div className="stats-container">
       <div className="stats-filters">
         <select value={month} onChange={(e) => setMonth(e.target.value)}>
+          <option value="0">All Year</option>
           {MONTHS.map(m => (
             <option key={m.value} value={m.value}>{m.name}</option>
           ))}
@@ -74,6 +80,7 @@ function SummaryStats() {
         </select>
       </div>
 
+      
       <div className="stat-card income">
         <h4>Total Income</h4>
         <div className="amount">{formatCurrency(stats.total_income)}</div>
@@ -86,6 +93,20 @@ function SummaryStats() {
         <h4>Net Balance</h4>
         <div className="amount">{formatCurrency(stats.net_balance)}</div>
       </div>
+
+      <div className="stat-card neutral">
+        <h4>Total Transactions</h4>
+        <div className="amount">{stats.total_transactions}</div>
+      </div>
+      <div className="stat-card expense">
+        <h4>Biggest Expense</h4>
+        <div className="amount">{formatCurrency(stats.biggest_expense)}</div>
+      </div>
+      <div className="stat-card expense">
+        <h4>Average Expense</h4>
+        <div className="amount">{formatCurrency(stats.average_expense)}</div>
+      </div>
+      
     </div>
   );
 }

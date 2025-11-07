@@ -223,7 +223,7 @@ def create_transaction(current_user):
         new_transaction = Transaction(
             description=data['description'],
             amount=float(data['amount']),
-            category=data.get('category', 'Egyéb'),
+            category=data.get('category', 'Other'),
             date=transaction_date_obj,
             user_id=current_user.id
         )
@@ -351,7 +351,6 @@ def get_all_transactions(current_user):
 @token_required
 @admin_required
 def get_all_roles(current_user):
-    """(Admin) Visszaadja az összes elérhető szerepkört."""
     try:
         roles = Role.query.all()
         return jsonify({'roles': [role.name for role in roles]}), 200
@@ -384,7 +383,7 @@ def update_user(current_user, id):
     try:
         user = User.query.get(id)
         if not user:
-            return jsonify({'error': 'Felhasználó nem található'}), 404
+            return jsonify({'error': 'User not found'}), 404
 
         data = request.get_json()
         
@@ -395,11 +394,11 @@ def update_user(current_user, id):
         if role_name:
             new_role = Role.query.filter_by(name=role_name).first()
             if not new_role:
-                return jsonify({'error': 'Érvénytelen szerepkör'}), 400
+                return jsonify({'error': 'Invalid role'}), 400
             user.role = new_role
             
         db.session.commit()
-        return jsonify({'message': 'Felhasználó frissítve'}), 200
+        return jsonify({'message': 'User updated'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -410,16 +409,16 @@ def update_user(current_user, id):
 def delete_user(current_user, id):
     try:
         if current_user.id == id:
-            return jsonify({'error': 'Saját magadat nem törölheted'}), 403
+            return jsonify({'error': 'You cannot delete yourself.'}), 403
             
         user = User.query.get(id)
         if not user:
-            return jsonify({'error': 'Felhasználó nem található'}), 404
+            return jsonify({'error': 'User not found.'}), 404
 
         db.session.delete(user)
         db.session.commit()
         
-        return jsonify({'message': 'Felhasználó sikeresen törölve'}), 200
+        return jsonify({'message': 'User has been removed.'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -427,29 +426,45 @@ def delete_user(current_user, id):
 @api_bp.route('/stats', methods=['GET'])
 @token_required
 def get_stats(current_user):
-
     try:
         now = datetime.now()
-        month = request.args.get('month', default=now.month, type=int)
+        month = request.args.get('month', default=now.month, type=int) 
         year = request.args.get('year', default=now.year, type=int)
 
-        stats = db.session.query(
+        query_base = db.session.query(
             func.sum(case((Transaction.amount > 0, Transaction.amount), else_=0)).label('total_income'),
-            func.sum(case((Transaction.amount < 0, Transaction.amount), else_=0)).label('total_expense')
+            func.sum(case((Transaction.amount < 0, Transaction.amount), else_=0)).label('total_expense'),
+            
+            func.count(Transaction.id).label('total_transactions'),
+            
+            func.max(case((Transaction.amount > 0, Transaction.amount), else_=0)).label('biggest_income'),
+            
+            func.min(case((Transaction.amount < 0, Transaction.amount), else_=0)).label('biggest_expense'),
+            
+            func.avg(case((Transaction.amount < 0, Transaction.amount), else_=None)).label('average_expense')
+            
         ).filter(
             Transaction.user_id == current_user.id,
-            extract('month', Transaction.date) == month,
             extract('year', Transaction.date) == year
-        ).one()
+        )
+
+        if month != 0:
+            query_base = query_base.filter(extract('month', Transaction.date) == month)
+        
+        stats = query_base.one()
 
         income = stats.total_income or 0
         expense = stats.total_expense or 0
         net = income + expense
-
+        
         return jsonify({
             'total_income': income,
             'total_expense': expense,
             'net_balance': net,
+            'total_transactions': stats.total_transactions or 0,
+            'biggest_income': stats.biggest_income or 0,
+            'biggest_expense': stats.biggest_expense or 0,
+            'average_expense': stats.average_expense or 0,
             'month': month,
             'year': year
         }), 200
