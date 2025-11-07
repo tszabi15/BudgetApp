@@ -77,12 +77,3 @@
 .delete-button:hover {
   background-color: #c0392b;
 }
-
-.form-field select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  background-color: white;
-}
