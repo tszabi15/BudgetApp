@@ -6,6 +6,8 @@ from .models import User, Transaction, Role
 import jwt
 from datetime import datetime, timezone, timedelta
 from functools import wraps
+from sqlalchemy import func, case, extract
+from datetime import datetime
 
 
 def token_required(f):
@@ -341,6 +343,117 @@ def get_all_transactions(current_user):
             
         return jsonify({'all_transactions': output}), 200
         
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/roles', methods=['GET'])
+@token_required
+@admin_required
+def get_all_roles(current_user):
+    """(Admin) Visszaadja az összes elérhető szerepkört."""
+    try:
+        roles = Role.query.all()
+        return jsonify({'roles': [role.name for role in roles]}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/admin/users', methods=['GET'])
+@token_required
+@admin_required
+def get_all_users(current_user):
+    try:
+        users = User.query.all()
+        output = []
+        for user in users:
+            output.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'currency': user.currency,
+                'role': user.role.name if user.role else None
+            })
+        return jsonify({'users': output}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/admin/users/<int:id>', methods=['PUT'])
+@token_required
+@admin_required
+def update_user(current_user, id):
+    try:
+        user = User.query.get(id)
+        if not user:
+            return jsonify({'error': 'Felhasználó nem található'}), 404
+
+        data = request.get_json()
+        
+        user.username = data.get('username', user.username)
+        user.email = data.get('email', user.email)
+        
+        role_name = data.get('role')
+        if role_name:
+            new_role = Role.query.filter_by(name=role_name).first()
+            if not new_role:
+                return jsonify({'error': 'Érvénytelen szerepkör'}), 400
+            user.role = new_role
+            
+        db.session.commit()
+        return jsonify({'message': 'Felhasználó frissítve'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/admin/users/<int:id>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_user(current_user, id):
+    try:
+        if current_user.id == id:
+            return jsonify({'error': 'Saját magadat nem törölheted'}), 403
+            
+        user = User.query.get(id)
+        if not user:
+            return jsonify({'error': 'Felhasználó nem található'}), 404
+
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': 'Felhasználó sikeresen törölve'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+@api_bp.route('/stats', methods=['GET'])
+@token_required
+def get_stats(current_user):
+
+    try:
+        now = datetime.now()
+        month = request.args.get('month', default=now.month, type=int)
+        year = request.args.get('year', default=now.year, type=int)
+
+        stats = db.session.query(
+            func.sum(case((Transaction.amount > 0, Transaction.amount), else_=0)).label('total_income'),
+            func.sum(case((Transaction.amount < 0, Transaction.amount), else_=0)).label('total_expense')
+        ).filter(
+            Transaction.user_id == current_user.id,
+            extract('month', Transaction.date) == month,
+            extract('year', Transaction.date) == year
+        ).one()
+
+        income = stats.total_income or 0
+        expense = stats.total_expense or 0
+        net = income + expense
+
+        return jsonify({
+            'total_income': income,
+            'total_expense': expense,
+            'net_balance': net,
+            'month': month,
+            'year': year
+        }), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

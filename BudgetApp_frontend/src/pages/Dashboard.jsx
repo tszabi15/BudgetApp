@@ -4,6 +4,7 @@ import AddTransactionForm from '../components/AddTransactionForm';
 import Modal from '../components/Modal';
 import EditTransactionForm from '../components/EditTransactionForm';
 import { useAuth } from '../context/AuthContext';
+import SummaryStats from '../components/SummaryStats';
 import './Dashboard.css';
 
 function DashboardPage() {
@@ -95,6 +96,8 @@ function DashboardPage() {
     <div className="dashboard-container">
       <h2>Your Transactions</h2>
       
+      <SummaryStats />
+
       <AddTransactionForm onNewTransaction={handleAddNewTransaction} />
 
       {transactions.length > 0 && <h3>Recent Transactions</h3>}

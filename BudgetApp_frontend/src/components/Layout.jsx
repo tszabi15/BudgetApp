@@ -1,4 +1,4 @@
-// src/components/Layout.jsx
+import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/apiClient';
@@ -15,6 +15,8 @@ const CURRENCIES = [
 function Layout() {
   const { user, token, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
   
   const handleLogout = () => {
     logout();
@@ -49,10 +51,21 @@ function Layout() {
             <Link to="/transactions">Transactions</Link>
           </li>
           {isAdmin && (
-            <li>
-              <Link to="/admin" style={{color: '#c0392b', fontWeight: 'bold'}}>
+            <li className="nav-dropdown">
+              <button 
+                className="nav-dropdown-trigger" 
+                onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+              >
                 Admin
-              </Link>
+              </button>
+              <div className={`dropdown-menu ${isAdminDropdownOpen ? 'show' : ''}`}>
+                <Link to="/admin/transactions" onClick={() => setIsAdminDropdownOpen(false)}>
+                  All Transactions
+                </Link>
+                <Link to="/admin/users" onClick={() => setIsAdminDropdownOpen(false)}>
+                  User Management
+                </Link>
+              </div>
             </li>
           )}
           {token ? (

@@ -15,6 +15,7 @@ function AdminPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  
 
   useEffect(() => {
     const fetchAllTransactions = async () => {

@@ -8,6 +8,8 @@ import RegisterPage from './pages/Register';
 import TransactionsPage from './pages/Transactions';
 import AdminRoute from './components/auth/AdminRoute';
 import AdminPage from './pages/AdminPage';
+import UserManagementPage from './pages/UserManagement';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -23,8 +25,11 @@ function App() {
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path="admin" element={<AdminPage />} />
+          <Route path="admin/transactions" element={<AdminPage />} />
+          <Route path="admin/users" element={<UserManagementPage />} />
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );

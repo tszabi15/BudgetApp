@@ -1,0 +1,88 @@
+.user-list {
+  list-style: none;
+  padding: 0;
+}
+
+.user-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.user-card-info {
+  flex-grow: 1;
+}
+
+.user-card-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: #333;
+}
+
+.user-card-info .email {
+  color: #555;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-card-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.user-card-details .role {
+  font-weight: bold;
+  color: #c0392b;
+}
+
+.user-card-details .role.user {
+  color: #27ae60;
+}
+
+
+.user-card-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-button, .delete-button {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+.edit-button {
+  background-color: #007bff;
+}
+.edit-button:hover {
+  background-color: #0056b3;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+}
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+.form-field select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: white;
+}

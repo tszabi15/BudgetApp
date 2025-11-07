@@ -1,0 +1,58 @@
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.stats-filters {
+  flex-basis: 100%;
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stats-filters select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.stat-card h4 {
+  margin: 0 0 0.5rem 0;
+  color: #555;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.stat-card .amount {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.stat-card.income .amount {
+  color: #27ae60;
+}
+.stat-card.expense .amount {
+  color: #c0392b;
+}
+.stat-card.net .amount {
+  color: #333;
+}
