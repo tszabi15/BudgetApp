@@ -1,5 +1,3 @@
-# app/routes.py
-
 from flask import Blueprint, request, jsonify, current_app
 from .extensions import db
 from .models import User, Transaction, Role
@@ -137,7 +135,6 @@ def login():
 @api_bp.route('/profile/settings', methods=['PUT'])
 @token_required
 def update_settings(current_user):
-    """Updates the user's profile settings (e.g., currency)."""
     try:
         data = request.get_json()
         new_currency = data.get('currency')
@@ -164,6 +161,21 @@ def update_settings(current_user):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@api_bp.route('/categories', methods=['GET'])
+@token_required
+def get_categories(current_user):
+    try:
+        category_tuples = db.session.query(Transaction.category)\
+            .filter_by(user_id=current_user.id)\
+            .distinct()\
+            .all()
+        
+        categories = [category[0] for category in category_tuples if category[0]]
+        
+        return jsonify({'categories': categories}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/transactions', methods=['GET'])
 @token_required
